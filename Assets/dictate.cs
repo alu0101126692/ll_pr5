@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Windows.Speech;
+using TMPro;
 
 public class dictate : MonoBehaviour
 {
@@ -11,10 +12,10 @@ public class dictate : MonoBehaviour
     private DictationRecognizer dictado;
     public bool dictando;
     public keyword reconocedorKeyword;
+    public TextMeshPro texto;
 
     void Start()
     {
-        dictado = new DictationRecognizer();
         
 
     }
@@ -28,43 +29,47 @@ public class dictate : MonoBehaviour
 
     private void empezarDictado() {
 
-        dictado.DictationResult += (text, confidence) =>
-        {
-            Debug.LogFormat("Dictation result: {0}", text);
+        dictado = new DictationRecognizer();
+
+        dictado.DictationResult += (text, confidence) => {
+
+            Debug.Log("Resultado reconocimiento " + text);
+            texto.text = text;
+
         };
 
-        dictado.DictationHypothesis += (text) =>
-        {
-            Debug.LogFormat("Dictation hypothesis: {0}", text);
+        dictado.DictationHypothesis += (text) => {
+
+            Debug.Log("Hipotesis del texto " + text);
+            texto.text = text + " (Hipotesis)";
+
         };
 
-        dictado.DictationComplete += (completionCause) =>
-        {
-            if (completionCause != DictationCompletionCause.Complete)
-                Debug.LogErrorFormat("Dictation completed unsuccessfully: {0}.", completionCause);
-        };
 
-        dictado.DictationError += (error, hresult) =>
-        {
-            Debug.LogErrorFormat("Dictation error: {0}; HResult = {1}.", error, hresult);
-        };
     }
     private void administarDictado() {
-        if (!dictando && !reconocedorKeyword.reconociendo) {
-            if (Input.GetKeyDown("g")) {
-                empezarDictado();
-                dictando = true;
-                //reconocedorKeyword.parar();
-                dictado.Start();
-            } 
+        if (reconocedorKeyword.encendido) { // Solo ejecutar esto si esta encedido
+            if (!dictando && !reconocedorKeyword.reconociendo) {
+                if (Input.GetKeyDown("g")) {
+                    empezarDictado();
+                    dictando = true;
+                    Debug.Log(PhraseRecognitionSystem.Status);
+                    if (PhraseRecognitionSystem.Status.ToString() != "Stopped")
+                        PhraseRecognitionSystem.Shutdown(); // Tiene que apagarse esto antes de cada ejecucion ya que no puede ejecutarse a la vez que el dictado
+                    
+                    
+                    //reconocedorKeyword.parar();
+                    dictado.Start();
+                } 
 
-            
-        } else if (dictando){
-            if (Input.GetKeyDown("g")) {
-                dictando = false;
-                dictado.Stop();
-                parar();
-            } 
+                
+            } else if (dictando){
+                if (Input.GetKeyDown("g")) {
+                    dictando = false;
+                    dictado.Stop();
+                    parar();
+                } 
+            }
         }
     }
 
